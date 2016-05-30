@@ -3,6 +3,8 @@
 // });
 // 
 
+var chartThisValue = "CLMUR";
+
 
 var margin = {
         top: 20,
@@ -14,7 +16,7 @@ var margin = {
 var width = $(".chart").width() - margin.left - margin.right;
 var height = $(".chart").height() - margin.top - margin.bottom;
 
-var formatDate = d3.time.format("%Y-%d-%m");
+var formatDate = d3.time.format("%Y-%m-%d");
 
 var x = d3.time.scale()
     .range([0, width]);
@@ -32,7 +34,7 @@ var yAxis = d3.svg.axis()
 
 var line = d3.svg.line()
     .x(function(d) { return x(d.observation_date); })
-    .y(function(d) { return y(d.CLMUR); });
+    .y(function(d) { return y(d.chartThisValue); });
 
 var svg = d3.select(".chart").append("svg")
     .attr("width", width + margin.left + margin.right)
@@ -44,11 +46,14 @@ var svg = d3.select(".chart").append("svg")
 
 //WHERE THE DATA IS LOADED
 
-d3.csv("unemployment.csv", type, function(error, data) {
+d3.tsv("new_jobs.tsv", type, function(error, data) {
 
   console.log(data);
 
   if (error) throw error;
+  
+  
+  setNav();
   
 //LOCAL VARIABLES HERE
 
@@ -71,10 +76,10 @@ d3.csv("unemployment.csv", type, function(error, data) {
     /* ----------------- */
 
 var timeDomain = d3.extent(data, function(d) {return +d.observation_date}); //this is x domain
-var valueDomain = d3.extent(data, function(d) {return d.CLMUR});    
+var valueDomain = d3.extent(data, function(d) {return d.chartThisValue});    
 
 x.domain(timeDomain).nice();
-y.domain(valueDomain).nice();
+y.domain([0, 8]);
 
 
 
@@ -99,11 +104,51 @@ y.domain(valueDomain).nice();
   svg.append("path")
       .datum(data)
       .attr("class", "line")
-      .attr("d", line);
-})
+        
+
+updateLine();
+
+});
+
+
+
+function updateLine(){
+
+line.y(function(d) {return y(d[chartThisValue]); });
+
+d3.select(".line")
+.transition()
+.duration(500)
+.attr("d", line);
+
+
+}
 
 function type(d) {
   d.observation_date = formatDate.parse(d.observation_date);
-  d.CLMUR = +d.CLMUR;
+  d.chartThisValue = +d.chartThisValue;
+  d.CLMURN = +d.CLMURN;
   return d;
 }
+
+
+
+
+
+function setNav(){
+
+$(".btn").on("click", function() {
+
+$(".btn").removeClass("active");
+$(this).addClass("active");
+
+
+var val = $(this).attr("val");
+chartThisValue = val;
+updateLine();
+
+});
+
+}
+
+
